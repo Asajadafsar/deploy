@@ -1,0 +1,38 @@
+from django.urls import path
+from .views import (
+    ContactUsView,
+    PartnershipRequestView,
+    ChangePasswordView,
+    ViewUserProfileView,
+    UpdateUserProfileView,
+    CreatePurchaseRequestView,
+    ConfirmTransactionView,
+    PurchaseStatusView,
+    UserPurchasesView,
+    TotalAssetOverviewView,
+    TotalPurchasedTokensView,
+    WithdrawableBalanceView,
+    RequestPasswordResetView,
+    AccountView,
+    LoginHistoryView,
+    ActiveDevicesView,
+)
+
+urlpatterns = [
+    path('account', AccountView.as_view(), name='account'),
+    path('contact/', ContactUsView.as_view(), name='contact_us'),
+    path('buy-token/', CreatePurchaseRequestView.as_view(), name='buy_token'),
+    path('confirm-transaction/', ConfirmTransactionView.as_view(), name='confirm_transaction'),
+    path('purchase-status/', PurchaseStatusView.as_view(), name='purchase_status'),
+    path('my-purchases/', UserPurchasesView.as_view(), name='get_user_purchases'),
+    path('assets/overview/', TotalAssetOverviewView.as_view(), name='assets_overview'),
+    path('assets/total-purchased/', TotalPurchasedTokensView.as_view(), name='total_purchased'),
+    path('assets/withdrawable/', WithdrawableBalanceView.as_view(), name='withdrawable_balance'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('partnership-request/', PartnershipRequestView.as_view(), name='partnership_request'),
+    path('user-profile/', ViewUserProfileView.as_view(), name='view_user_profile'),
+    path('edit-profile/', UpdateUserProfileView.as_view(), name='update_user_profile'),
+    path('login-history', LoginHistoryView.as_view()),
+    path('active-devices', ActiveDevicesView.as_view()),
+    path('request-password-reset/', RequestPasswordResetView.as_view(), name='request-password-reset'),
+]

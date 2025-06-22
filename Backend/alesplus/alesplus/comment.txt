@@ -1,0 +1,527 @@
+# from django.views.decorators.csrf import csrf_exempt
+# from django.http import JsonResponse
+# from django.core.files.storage import default_storage
+# from .models import NETWORK_CHOICES, PARTNERSHIP_CHOICES, Contact, CustomUser, PartnershipRequest, TokenPurchase
+# import json
+# from django.contrib.auth.hashers import make_password, check_password
+# from rest_framework_simplejwt.tokens import RefreshToken
+# from rest_framework_simplejwt.authentication import JWTAuthentication
+# from rest_framework.authentication import get_authorization_header
+# from decimal import Decimal
+
+
+# # Helper function to get user from JWT token
+# def get_user_from_token(request):
+#     auth = get_authorization_header(request).split()
+#     if not auth or auth[0].lower() != b'bearer' or len(auth) != 2:
+#         return None
+#     token = auth[1].decode('utf-8')
+#     try:
+#         validated_token = JWTAuthentication().get_validated_token(token)
+#         user = JWTAuthentication().get_user(validated_token)
+#         return user
+#     except Exception:
+#         return None
+
+
+
+
+
+# # contact_us
+# @csrf_exempt
+# def contact_us(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON data!'}, status=400)
+
+#         required_fields = ['first_name', 'last_name', 'phone_number', 'email', 'description']
+#         if all(field in data for field in required_fields):
+#             Contact.objects.create(
+#                 first_name=data['first_name'],
+#                 last_name=data['last_name'],
+#                 phone_number=data['phone_number'],
+#                 email=data['email'],
+#                 description=data['description']
+#             )
+#             return JsonResponse({'message': 'Contact information saved successfully!'})
+#         else:
+#             return JsonResponse({'error': 'Required fields are missing!'}, status=400)
+#     return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+
+
+
+# #Partnership Request
+# @csrf_exempt
+# def partnership_request(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+#     try:
+#         data = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON data!'}, status=400)
+
+#     required_fields = ['first_name', 'last_name', 'email', 'phone_number', 'cooperation_type']
+#     if not all(field in data for field in required_fields):
+#         return JsonResponse({'error': 'Missing required fields!'}, status=400)
+
+#     if data['cooperation_type'] not in dict(PARTNERSHIP_CHOICES):
+#         return JsonResponse({'error': 'Invalid cooperation type!'}, status=400)
+
+#     other_description = data.get('other_description') if data['cooperation_type'] == 'other' else None
+
+#     PartnershipRequest.objects.create(
+#         first_name=data['first_name'],
+#         last_name=data['last_name'],
+#         email=data['email'],
+#         phone_number=data['phone_number'],
+#         cooperation_type=data['cooperation_type'],
+#         other_description=other_description
+#     )
+
+#     return JsonResponse({'message': 'Partnership request submitted successfully!'})
+
+
+
+
+
+
+# # register_user
+# @csrf_exempt
+# def register_user(request):
+#     if request.method == 'POST':
+#         try:
+#             if request.content_type.startswith('multipart/form-data'):
+#                 data = request.POST
+#                 files = request.FILES
+#             else:
+#                 return JsonResponse({'error': 'Only multipart/form-data supported for this endpoint'}, status=400)
+#         except Exception:
+#             return JsonResponse({'error': 'Invalid data!'}, status=400)
+
+#         required_fields = ['first_name', 'last_name', 'email', 'password']
+#         if not all(field in data for field in required_fields):
+#             return JsonResponse({'error': 'Missing required fields!'}, status=400)
+
+#         email = data['email']
+#         if CustomUser.objects.filter(email=email).exists():
+#             return JsonResponse({'error': 'Email already registered!'}, status=400)
+
+#         username = email.split('@')[0]
+#         hashed_password = make_password(data['password'])
+
+#         phone_number = data.get('phone_number')
+#         verification_code = data.get('verification_code')
+#         role = data.get('role', 'user')  # Default role = 'user'
+
+#         if verification_code and (not verification_code.isdigit() or len(verification_code) != 6):
+#             return JsonResponse({'error': 'Verification code must be exactly 6 digits!'}, status=400)
+
+#         avatar = files['avatar'] if files and 'avatar' in files else None
+#         avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar) if avatar else None
+
+#         user = CustomUser.objects.create(
+#             first_name=data['first_name'],
+#             last_name=data['last_name'],
+#             email=email,
+#             username=username,
+#             password=hashed_password,
+#             phone_number=phone_number,
+#             verification_code=verification_code,
+#             avatar=avatar_path,
+#             role=role
+#         )
+
+#         refresh = RefreshToken.for_user(user)
+#         user.access_token = str(refresh.access_token)
+#         user.refresh_token = str(refresh)
+#         user.save()
+
+#         return JsonResponse({
+#             'message': 'User registered successfully!',
+#             'user_id': user.id,
+#             'access': user.access_token,
+#             'refresh': user.refresh_token
+#         })
+
+#     return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+
+
+# # login_user
+# @csrf_exempt
+# def login_user(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON data!'}, status=400)
+
+#         email = data.get('email')
+#         password = data.get('password')
+
+#         if not email or not password:
+#             return JsonResponse({'error': 'Email and password are required!'}, status=400)
+
+#         try:
+#             user = CustomUser.objects.get(email=email)
+#         except CustomUser.DoesNotExist:
+#             return JsonResponse({'error': 'Invalid credentials!'}, status=401)
+
+#         if check_password(password, user.password):
+#             refresh = RefreshToken.for_user(user)
+#             user.access_token = str(refresh.access_token)
+#             user.refresh_token = str(refresh)
+#             user.save()
+
+#             return JsonResponse({
+#                 'message': 'Login successful!',
+#                 'user_id': user.id,
+#                 'username': user.username,
+#                 'access': user.access_token,
+#                 'refresh': user.refresh_token
+#             })
+#         else:
+#             return JsonResponse({'error': 'Invalid credentials!'}, status=401)
+#     return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+
+# #reset password
+# @csrf_exempt
+# def change_password(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed!'}, status=401)
+
+#     try:
+#         data = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON data!'}, status=400)
+
+#     current_password = data.get('current_password')
+#     new_password = data.get('new_password')
+
+#     if not current_password or not new_password:
+#         return JsonResponse({'error': 'Both current and new passwords are required!'}, status=400)
+
+#     if not check_password(current_password, user.password):
+#         return JsonResponse({'error': 'Current password is incorrect!'}, status=400)
+
+#     if len(new_password) < 6:
+#         return JsonResponse({'error': 'New password must be at least 6 characters long!'}, status=400)
+
+#     user.password = make_password(new_password)
+
+#     refresh = RefreshToken.for_user(user)
+#     user.access_token = str(refresh.access_token)
+#     user.refresh_token = str(refresh)
+#     user.save()
+
+#     return JsonResponse({
+#         'message': 'Password changed successfully!',
+#         'access': user.access_token,
+#         'refresh': user.refresh_token
+#     })
+
+
+
+
+# #view profile
+# @csrf_exempt
+# def view_user_profile(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed!'}, status=401)
+
+#     return JsonResponse({
+#         'user_id': user.id,
+#         'first_name': user.first_name,
+#         'last_name': user.last_name,
+#         'email': user.email,
+#         'phone_number': user.phone_number,
+#         'username': user.username,
+#         'avatar_url': user.avatar.url if user.avatar else None,
+#     })
+
+
+
+# #edit info user
+# @csrf_exempt
+# def update_user_profile(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed!'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed!'}, status=401)
+
+#     try:
+#         if request.content_type.startswith('multipart/form-data'):
+#             data = request.POST
+#             files = request.FILES
+#         else:
+#             data = json.loads(request.body)
+#             files = {}
+#     except Exception:
+#         return JsonResponse({'error': 'Invalid data!'}, status=400)
+
+#     # Update only if field exists and is not empty
+#     if data.get('first_name'):
+#         user.first_name = data['first_name']
+
+#     if data.get('last_name'):
+#         user.last_name = data['last_name']
+
+#     if data.get('phone_number'):
+#         user.phone_number = data['phone_number']
+
+#     if 'avatar' in files:
+#         avatar = files['avatar']
+#         avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar)
+#         user.avatar = avatar_path
+
+#     user.save()
+
+#     return JsonResponse({'message': 'Profile updated successfully!'})
+
+
+
+# #Decimal Token to USDT
+# TOKEN_PRICE = Decimal('0.10')  
+# MIN_TOKENS = 500               
+
+
+# # Create a new token purchase request
+# @csrf_exempt
+# def create_purchase_request(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed'}, status=401)
+
+#     try:
+#         data = json.loads(request.body.decode('utf-8'))
+#     except Exception:
+#         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+
+#     required_fields = ['token_amount', 'network', 'verification_code']
+#     if not all(field in data for field in required_fields):
+#         return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+#     if data['network'] not in dict(NETWORK_CHOICES):
+#         return JsonResponse({'error': 'Invalid network selected'}, status=400)
+
+#     if not user.verification_code or user.verification_code != data['verification_code']:
+#         return JsonResponse({'error': 'Invalid verification code'}, status=400)
+
+#     try:
+#         token_amount = int(data['token_amount'])
+#         if token_amount < MIN_TOKENS:
+#             return JsonResponse({'error': f'Minimum purchase is {MIN_TOKENS} tokens.'}, status=400)
+#     except ValueError:
+#         return JsonResponse({'error': 'token_amount must be an integer'}, status=400)
+
+#     usdt_amount = Decimal(token_amount) * TOKEN_PRICE
+
+#     wallet_addresses = {
+#         'TRC20': 'TXMTej3ecvp5nnJRufbhBoRGNygjubrrZa',
+#         'BEP20': '0x887b46aBb77B372aC7ae2d4F75C1f93890C31827',
+#         'ERC20': '0x887b46aBb77B372aC7ae2d4F75C1f93890C31827'
+#     }
+
+#     trust_links = {
+#         'TRC20': f'https://link.trustwallet.com/send?coin=195&address={wallet_addresses["TRC20"]}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+#         'BEP20': f'https://link.trustwallet.com/send?coin=20000714&address={wallet_addresses["BEP20"]}&token_id=0x55d398326f99059fF775485246999027B3197955',
+#         'ERC20': f'https://link.trustwallet.com/send?coin=60&address={wallet_addresses["ERC20"]}&token_id=0xdAC17F958D2ee523a2206206994597C13D831ec7'
+#     }
+
+#     network = data['network']
+#     address = wallet_addresses[network]
+
+#     purchase = TokenPurchase.objects.create(
+#         user=user,
+#         usdt_amount=usdt_amount,
+#         network=network,
+#         wallet_address=address,
+#         status='pending'
+#     )
+
+#     return JsonResponse({
+#         'message': 'Purchase request created successfully.',
+#         'purchase_id': purchase.id,
+#         'wallet_address': address,
+#         'usdt_amount': str(usdt_amount),
+#         'token_amount': token_amount,
+#         'trust_wallet_link': trust_links[network]
+#     })
+
+
+
+# # confirm_transaction
+# @csrf_exempt
+# def confirm_transaction(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     try:
+#         data = json.loads(request.body.decode('utf-8'))
+#     except Exception:
+#         return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+
+#     required_fields = ['purchase_id', 'tx_hash']
+#     if not all(field in data for field in required_fields):
+#         return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+#     try:
+#         purchase = TokenPurchase.objects.get(id=data['purchase_id'])
+#     except TokenPurchase.DoesNotExist:
+#         return JsonResponse({'error': 'Purchase not found'}, status=404)
+
+#     purchase.tx_hash = data['tx_hash']
+#     purchase.status = 'reviewing'  # ← وضعیت جدید
+#     purchase.save()
+
+#     return JsonResponse({'message': 'Transaction submitted and is under review.'})
+
+
+# # get_user_purchases
+# @csrf_exempt
+# def get_purchase_status(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     purchase_id = request.GET.get('purchase_id')
+#     if not purchase_id:
+#         return JsonResponse({'error': 'purchase_id is required'}, status=400)
+
+#     try:
+#         purchase = TokenPurchase.objects.get(id=purchase_id)
+#     except TokenPurchase.DoesNotExist:
+#         return JsonResponse({'error': 'Purchase not found'}, status=404)
+
+#     token_amount = int(purchase.usdt_amount / TOKEN_PRICE)
+
+#     return JsonResponse({
+#         'purchase_id': purchase.id,
+#         'user': purchase.user.username,
+#         'network': purchase.network,
+#         'usdt_amount': str(purchase.usdt_amount),
+#         'token_amount': token_amount,
+#         'status': purchase.status,
+#         'wallet_address': purchase.wallet_address,
+#         'tx_hash': purchase.tx_hash
+#     })
+
+
+
+# #get user purchases
+# @csrf_exempt
+# def get_user_purchases(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed'}, status=401)
+
+#     purchases = TokenPurchase.objects.filter(user=user).order_by('-created_at')
+
+#     data = []
+#     for purchase in purchases:
+#         token_amount = int(purchase.usdt_amount / Decimal('0.10'))
+#         data.append({
+#             'purchase_id': purchase.id,
+#             'usdt_amount': str(purchase.usdt_amount),
+#             'token_amount': token_amount,
+#             'network': purchase.network,
+#             'status': purchase.status,
+#             'wallet_address': purchase.wallet_address,
+#             'tx_hash': purchase.tx_hash,
+#             'created_at': purchase.created_at.isoformat()
+#         })
+
+#     return JsonResponse({'purchases': data})
+
+
+
+# # Get total tokens bought and withdrawable balance
+# @csrf_exempt
+# def get_total_asset_overview(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed'}, status=401)
+
+#     all_purchases = TokenPurchase.objects.filter(user=user)
+#     confirmed = all_purchases.filter(status='confirmed')
+
+#     token_price = Decimal('0.10')
+#     total_usdt = sum(p.usdt_amount for p in all_purchases)
+#     total_tokens = int(total_usdt / token_price)
+
+#     confirmed_usdt = sum(p.usdt_amount for p in confirmed)
+#     confirmed_tokens = int(confirmed_usdt / token_price)
+
+#     return JsonResponse({
+#         "total_usdt": str(total_usdt),
+#         "total_tokens": total_tokens,
+#         "withdrawable_usdt": str(confirmed_usdt),
+#         "withdrawable_tokens": confirmed_tokens
+#     })
+
+
+# # Get total tokens purchased (all statuses)
+# @csrf_exempt
+# def get_total_purchased_tokens(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed'}, status=401)
+
+#     token_price = Decimal('0.10')
+#     purchases = TokenPurchase.objects.filter(user=user)
+#     total_usdt = sum(p.usdt_amount for p in purchases)
+#     total_tokens = int(total_usdt / token_price)
+
+#     return JsonResponse({
+#         "total_purchased_tokens": total_tokens,
+#         "total_spent_usdt": str(total_usdt)
+#     })
+
+
+# # Get withdrawable tokens (confirmed only)
+# @csrf_exempt
+# def get_withdrawable_balance(request):
+#     if request.method != 'GET':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+#     user = get_user_from_token(request)
+#     if not user:
+#         return JsonResponse({'error': 'Authentication failed'}, status=401)
+
+#     token_price = Decimal('0.10')
+#     confirmed = TokenPurchase.objects.filter(user=user, status='confirmed')
+#     total_usdt = sum(p.usdt_amount for p in confirmed)
+#     total_tokens = int(total_usdt / token_price)
+
+#     return JsonResponse({
+#         "withdrawable_tokens": total_tokens,
+#         "withdrawable_usdt": str(total_usdt)
+#     })
+
+
