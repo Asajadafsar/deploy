@@ -94,7 +94,7 @@ DATABASES = {
         'NAME': 'alesplus_db',
         'USER': 'postgres', 
         'PASSWORD': 'Aliafsar31344',
-        'HOST': 'localhost',
+        'HOST': '91.107.245.14',
         'PORT': '5432',
     }
 }
