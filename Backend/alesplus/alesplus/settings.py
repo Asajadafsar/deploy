@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -91,11 +92,11 @@ WSGI_APPLICATION = 'alesplus.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'alesplus_db',
-        'USER': 'postgres', 
-        'PASSWORD': 'Aliafsar31344',
-        'HOST': '91.107.245.14',
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME', 'alesplus_db'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'Aliafsar31344'),
+        'HOST': os.environ.get('DB_HOST', 'db'), 
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
