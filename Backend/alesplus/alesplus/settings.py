@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-!qhawjco32n1bd#iwxpr*awj06%c8^$@&md#mo$rovt%6@)qwo
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['panel.alecplus.tech', '127.0.0.1', 'localhost']
+
 
 
 # Application definition
@@ -46,9 +47,13 @@ INSTALLED_APPS = [
 from datetime import timedelta
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication', 
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',  
     )
 }
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
