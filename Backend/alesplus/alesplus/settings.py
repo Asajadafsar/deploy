@@ -153,3 +153,13 @@ EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'rest@alecplus.tech'
 EMAIL_HOST_PASSWORD = 'MI3_2,S.J_TM'
 DEFAULT_FROM_EMAIL = 'rest@alecplus.tech'
+
+
+
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'LOGIN_URL': None,
+    'LOGOUT_URL': None,
+    'DEFAULT_INFO': 'alesplus.urls.schema_view',
+}
