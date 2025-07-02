@@ -14,12 +14,12 @@ schema_view = get_schema_view(
         title="AlecPlus API",
         default_version='v1',
         description="Full API documentation for AlecPlus system",
-        terms_of_service="https://panel.alecplus.tech/terms/",
-        contact=openapi.Contact(email="info@alecplus.tech"),
+        terms_of_service="https://yourdomain.com/terms/",
+        contact=openapi.Contact(email="support@yourdomain.com"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
-    permission_classes=[permissions.AllowAny],  # Make sure it's public
+    permission_classes=[permissions.AllowAny],
 )
 
 urlpatterns = [
