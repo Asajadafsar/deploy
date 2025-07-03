@@ -2,18 +2,14 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-# Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!qhawjco32n1bd#iwxpr*awj06%c8^$@&md#mo$rovt%6@)qwo'
-
-# SECURITY WARNING: don't run with debug turned on in production!
+SECRET_KEY = 'django-insecure-...'
 DEBUG = True
 
-ALLOWED_HOSTS = ['91.107.245.14', 'api.alecplus.tech', 'localhost']
+ALLOWED_HOSTS = ['91.107.245.14', 'api.alecplus.tech', 'localhost', '127.0.0.1']
 
-# Application definition
+# Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -29,6 +25,7 @@ INSTALLED_APPS = [
     'drf_yasg',
 ]
 
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -70,7 +67,7 @@ DATABASES = {
     }
 }
 
-# JWT Authentication
+# Authentication
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -85,40 +82,31 @@ SIMPLE_JWT = {
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
-# Internationalization
+# Localization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static and Media
+# Static & Media
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# Custom user model
+# Custom User
 AUTH_USER_MODEL = 'user_view.CustomUser'
 
-# Email settings
+# Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'mail.alecplus.tech'
 EMAIL_PORT = 465
@@ -128,12 +116,12 @@ EMAIL_HOST_USER = 'rest@alecplus.tech'
 EMAIL_HOST_PASSWORD = 'MI3_2,S.J_TM'
 DEFAULT_FROM_EMAIL = 'rest@alecplus.tech'
 
-# Swagger settings
+# ✅ Swagger settings — استفاده از CDN
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'LOGIN_URL': None,
     'LOGOUT_URL': None,
     'DEFAULT_INFO': 'alesplus.urls.schema_view',
-    'USE_STATIC_FILES': False,  # 👈 استفاده از CDN برای فایل‌های Swagger
+    'USE_STATIC_FILES': False,  # 👈 این مهم‌ترین بخشه
     'PERSIST_AUTH': True,
 }
