@@ -14,8 +14,8 @@ schema_view = get_schema_view(
         title="AlecPlus API",
         default_version='v1',
         description="Full API documentation for AlecPlus system",
-        terms_of_service="https://yourdomain.com/terms/",
-        contact=openapi.Contact(email="support@yourdomain.com"),
+        terms_of_service="https://alecplus.tech/terms/",
+        contact=openapi.Contact(email="support@alecplus.tech"),
         license=openapi.License(name="MIT License"),
     ),
     public=True,
@@ -32,5 +32,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 
-# Serving media files during development
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serving media and static files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

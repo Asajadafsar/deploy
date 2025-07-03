@@ -164,3 +164,7 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': None,
     'DEFAULT_INFO': 'alesplus.urls.schema_view',
 }
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
