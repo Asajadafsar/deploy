@@ -6,6 +6,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+# Swagger schema setup
 schema_view = get_schema_view(
     openapi.Info(
         title="AlecPlus API",
@@ -21,10 +22,18 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('user_view.urls')),
+
+    # ✅ Swagger UI as root (https://api.alecplus.tech/)
+    path('', schema_view.with_ui('swagger', cache_timeout=0), name='root-swagger-ui'),
+
+    # ✅ Optional: JSON and YAML endpoints
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
+    # ✅ Optional: Redoc UI (https://api.alecplus.tech/redoc/)
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    # ✅ Your API routes (e.g., https://api.alecplus.tech/contact)
+    path('', include('user_view.urls')),
 ]
 
 if settings.DEBUG:
