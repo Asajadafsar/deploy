@@ -17,9 +17,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'corsheaders',
     'user_view',
-
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
@@ -27,6 +26,7 @@ INSTALLED_APPS = [
 
 # Middleware
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -122,6 +122,13 @@ SWAGGER_SETTINGS = {
     'LOGIN_URL': None,
     'LOGOUT_URL': None,
     'DEFAULT_INFO': 'alesplus.urls.schema_view',
-    'USE_STATIC_FILES': False,  # 👈 این مهم‌ترین بخشه
+    'USE_STATIC_FILES': False,  # از CDN استفاده کن
     'PERSIST_AUTH': True,
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'Authorization',
+]
