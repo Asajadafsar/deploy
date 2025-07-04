@@ -48,9 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     verification_code = models.CharField(
         max_length=6,
-        validators=[RegexValidator(regex=r'^\d{6}$', message='Verification code must be exactly 6 digits')],
-        null=True,
-        blank=True
+        validators=[RegexValidator(regex=r'^\d{6}$', message='Verification code must be exactly 6 digits')]
     )
     access_token = models.TextField(null=True, blank=True)
     refresh_token = models.TextField(null=True, blank=True)
@@ -141,4 +139,4 @@ class LoginHistory(models.Model):
     login_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.ip_address} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"{self.user.username} - {self.ip_address} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}
