@@ -124,7 +124,7 @@ class AccountView(APIView):
         request_body=openapi.Schema(
             title="Signup/Login Request",
             type=openapi.TYPE_OBJECT,
-            required=["email", "password"],
+            required=["first_name", "last_name", "email", "password", "verification_code"],
             properties={
                 "first_name": openapi.Schema(type=openapi.TYPE_STRING),
                 "last_name": openapi.Schema(type=openapi.TYPE_STRING),
@@ -146,45 +146,57 @@ class AccountView(APIView):
 
     def register(self, request):
         data = request.data
-        required_fields = ['first_name', 'last_name', 'email', 'password']
-        if not all(field in data for field in required_fields):
-            return Response({'error': 'Missing required fields!'}, status=400)
+        required_fields = ['first_name', 'last_name', 'email', 'password', 'verification_code']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+
+        if missing_fields:
+            return Response({'error': f"Missing required fields: {', '.join(missing_fields)}"}, status=400)
 
         email = data['email']
         if CustomUser.objects.filter(email=email).exists():
             return Response({'error': 'Email already registered!'}, status=400)
 
         avatar = request.FILES.get('avatar')
-        avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar) if avatar else None
+        if avatar and getattr(avatar, 'name', None):
+            avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar)
+        else:
+            avatar_path = None
 
-        user = CustomUser.objects.create(
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            email=email,
-            username=email.split('@')[0],
-            password=make_password(data['password']),
-            phone_number=data.get('phone_number'),
-            verification_code=data.get('verification_code'),
-            avatar=avatar_path,
-            role=data.get('role', 'user')
-        )
+        try:
+            user = CustomUser.objects.create(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                email=email,
+                username=email.split('@')[0],
+                password=make_password(data['password']),
+                phone_number=data.get('phone_number'),
+                verification_code=data['verification_code'],
+                avatar=avatar_path,
+                role=data.get('role', 'user')
+            )
 
-        refresh = RefreshToken.for_user(user)
-        user.access_token = str(refresh.access_token)
-        user.refresh_token = str(refresh)
-        user.save()
+            refresh = RefreshToken.for_user(user)
+            user.access_token = str(refresh.access_token)
+            user.refresh_token = str(refresh)
+            user.save()
 
-        return Response({
-            'message': 'User registered successfully!',
-            'user_id': user.id,
-            'access': user.access_token,
-            'refresh': user.refresh_token
-        })
+            return Response({
+                'message': 'User registered successfully!',
+                'user_id': user.id,
+                'access': user.access_token,
+                'refresh': user.refresh_token
+            })
+
+        except Exception as e:
+            return Response({'error': f"Server error: {str(e)}"}, status=500)
 
     def login(self, request):
         data = request.data
         email = data.get('email')
         password = data.get('password')
+
+        if not email or not password:
+            return Response({'error': 'Email and password are required!'}, status=400)
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -197,7 +209,6 @@ class AccountView(APIView):
             user.refresh_token = str(refresh)
             user.save()
 
-            # ثبت تاریخچه ورود
             LoginHistory.objects.create(
                 user=user,
                 ip_address=request.META.get('REMOTE_ADDR'),
@@ -213,7 +224,6 @@ class AccountView(APIView):
             })
 
         return Response({'error': 'Invalid credentials!'}, status=401)
-
 
 #send email forget by swagger
 class RequestPasswordResetView(APIView):
