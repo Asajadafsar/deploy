@@ -217,6 +217,8 @@ class AccountView(APIView):
 
 #send email forget by swagger
 class RequestPasswordResetView(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Request password reset",
         operation_description="Sends a password reset link to the user's email if it exists.",
@@ -229,37 +231,99 @@ class RequestPasswordResetView(APIView):
         ),
         responses={
             200: openapi.Response(description="Reset email sent"),
-            400: openapi.Response(description="Missing email"),
-            404: openapi.Response(description="User not found")
         }
     )
     def post(self, request):
         email = request.data.get('email')
         if not email:
             return Response({'error': 'Email is required!'}, status=400)
+
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'No user found with this email.'}, status=404)
+            # امنیت: همیشه پیام مشابه بده
+            return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
 
+        # تولید توکن یکتا
         token = get_random_string(64)
+        while PasswordResetToken.objects.filter(token=token).exists():
+            token = get_random_string(64)
+
+        # ساخت توکن در دیتابیس
         PasswordResetToken.objects.create(
             user=user,
             token=token,
             expires_at=timezone.now() + timedelta(hours=1)
         )
+
         reset_link = f"https://auth.alecplus.tech/forgot-password?token={token}"
+        message = (
+            f"Hi {user.first_name},\n\n"
+            f"You requested a password reset. Click the link below to reset your password:\n\n"
+            f"{reset_link}\n\n"
+            "If you didn't request this, just ignore this email."
+        )
+
         send_mail(
             subject="Password Reset Request",
-            message=f"Hi {user.first_name},\n\nClick the link below to reset your password:\n\n{reset_link}",
+            message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
             fail_silently=False,
         )
-        return Response({'message': 'Password reset link has been sent to your email.'})
+
+        return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
 
 
+#Get token And creat password new
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        operation_summary="Reset password using token",
+        operation_description="Set a new password using a valid reset token.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["token", "new_password", "confirm_password"],
+            properties={
+                "token": openapi.Schema(type=openapi.TYPE_STRING),
+                "new_password": openapi.Schema(type=openapi.TYPE_STRING, format="password"),
+                "confirm_password": openapi.Schema(type=openapi.TYPE_STRING, format="password"),
+            }
+        ),
+        responses={
+            200: "Password reset successful",
+            400: "Invalid or expired token / Password mismatch"
+        }
+    )
+    def post(self, request):
+        token = request.data.get("token")
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        if not token or not new_password or not confirm_password:
+            return Response({'error': 'All fields are required.'}, status=400)
+
+        if new_password != confirm_password:
+            return Response({'error': 'Passwords do not match.'}, status=400)
+
+        try:
+            token_obj = PasswordResetToken.objects.get(token=token)
+        except PasswordResetToken.DoesNotExist:
+            return Response({'error': 'Invalid token.'}, status=400)
+
+        if not token_obj.is_valid():
+            return Response({'error': 'Token has expired or already used.'}, status=400)
+
+        user = token_obj.user
+        user.password = make_password(new_password)
+        user.save()
+
+        # Deactivate the token
+        token_obj.used = True
+        token_obj.save()
+
+        return Response({'message': 'Password has been reset successfully.'})
 
 
 #--User Account & Security--

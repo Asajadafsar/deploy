@@ -3,6 +3,7 @@ from .views import (
     ContactUsView,
     PartnershipRequestView,
     ChangePasswordView,
+    ResetPasswordView,
     ViewUserProfileView,
     UpdateUserProfileView,
     CreatePurchaseRequestView,
@@ -34,5 +35,6 @@ urlpatterns = [
     path('edit-profile/', UpdateUserProfileView.as_view(), name='update_user_profile'),
     path('login-history', LoginHistoryView.as_view()),
     path('active-devices', ActiveDevicesView.as_view()),
+    path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
     path('request-password-reset/', RequestPasswordResetView.as_view(), name='request-password-reset'),
 ]
