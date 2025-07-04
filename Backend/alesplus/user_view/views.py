@@ -124,7 +124,7 @@ class AccountView(APIView):
         request_body=openapi.Schema(
             title="Signup/Login Request",
             type=openapi.TYPE_OBJECT,
-            required=["email", "password", "first_name", "last_name", "verification_code"],
+            required=["email", "password"],
             properties={
                 "first_name": openapi.Schema(type=openapi.TYPE_STRING),
                 "last_name": openapi.Schema(type=openapi.TYPE_STRING),
@@ -146,21 +146,16 @@ class AccountView(APIView):
 
     def register(self, request):
         data = request.data
-        required_fields = ['first_name', 'last_name', 'email', 'password', 'verification_code']
-        missing_fields = [field for field in required_fields if not data.get(field)]
-
-        if missing_fields:
-            return Response({'error': f"Missing required fields: {', '.join(missing_fields)}"}, status=400)
+        required_fields = ['first_name', 'last_name', 'email', 'password']
+        if not all(field in data for field in required_fields):
+            return Response({'error': 'Missing required fields!'}, status=400)
 
         email = data['email']
         if CustomUser.objects.filter(email=email).exists():
             return Response({'error': 'Email already registered!'}, status=400)
 
         avatar = request.FILES.get('avatar')
-        if avatar and getattr(avatar, 'name', None):
-            avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar)
-        else:
-            avatar_path = None
+        avatar_path = default_storage.save(f"avatars/{avatar.name}", avatar) if avatar else None
 
         user = CustomUser.objects.create(
             first_name=data['first_name'],
@@ -169,7 +164,7 @@ class AccountView(APIView):
             username=email.split('@')[0],
             password=make_password(data['password']),
             phone_number=data.get('phone_number'),
-            verification_code=data['verification_code'],
+            verification_code=data.get('verification_code'),
             avatar=avatar_path,
             role=data.get('role', 'user')
         )
@@ -191,9 +186,6 @@ class AccountView(APIView):
         email = data.get('email')
         password = data.get('password')
 
-        if not email or not password:
-            return Response({'error': 'Email and password are required!'}, status=400)
-
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
@@ -205,6 +197,7 @@ class AccountView(APIView):
             user.refresh_token = str(refresh)
             user.save()
 
+            # ثبت تاریخچه ورود
             LoginHistory.objects.create(
                 user=user,
                 ip_address=request.META.get('REMOTE_ADDR'),
@@ -220,6 +213,7 @@ class AccountView(APIView):
             })
 
         return Response({'error': 'Invalid credentials!'}, status=401)
+
 
 #send email forget by swagger
 class RequestPasswordResetView(APIView):
