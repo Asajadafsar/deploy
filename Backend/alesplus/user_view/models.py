@@ -2,7 +2,11 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.conf import settings
 
+# -----------------------------
+# Contact Model
+# -----------------------------
 class Contact(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -14,7 +18,9 @@ class Contact(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-
+# -----------------------------
+# Custom User Manager
+# -----------------------------
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -30,7 +36,9 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
-
+# -----------------------------
+# Custom User Model
+# -----------------------------
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -65,7 +73,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.username} ({self.email})"
 
-
+# -----------------------------
+# Token Purchase Model
+# -----------------------------
 NETWORK_CHOICES = [
     ('TRC20', 'USDT (TRC20)'),
     ('ERC20', 'USDT (ERC20)'),
@@ -73,7 +83,7 @@ NETWORK_CHOICES = [
 ]
 
 class TokenPurchase(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     usdt_amount = models.DecimalField(max_digits=20, decimal_places=6)
     network = models.CharField(max_length=10, choices=NETWORK_CHOICES)
     wallet_address = models.CharField(max_length=255)
@@ -84,7 +94,9 @@ class TokenPurchase(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.usdt_amount} USDT ({self.network})"
 
-
+# -----------------------------
+# Partnership Request Model
+# -----------------------------
 PARTNERSHIP_CHOICES = [
     ('advertising', 'Advertising'),
     ('investment_invention', 'Investment for Inventions Only'),
@@ -107,29 +119,26 @@ class PartnershipRequest(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.get_cooperation_type_display()}"
 
-
-
-
-
+# -----------------------------
+# Password Reset Token Model
+# -----------------------------
 class PasswordResetToken(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
     def is_valid(self):
         return timezone.now() < self.expires_at
-    
 
-
+# -----------------------------
+# Login History Model
+# -----------------------------
 class LoginHistory(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(null=True, blank=True)
     login_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.ip_address} - {self.login_time.strftime('%Y-%m-%d %H:%M:%S')}"
-
-
-
