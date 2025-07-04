@@ -36,6 +36,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -61,6 +62,7 @@ SIMPLE_JWT = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -163,6 +165,7 @@ EMAIL_HOST_PASSWORD = 'MI3_2,S.J_TM'
 DEFAULT_FROM_EMAIL = 'rest@alecplus.tech'
 
 
+from corsheaders.defaults import default_headers
 
 
 SWAGGER_SETTINGS = {
@@ -172,3 +175,14 @@ SWAGGER_SETTINGS = {
     'DEFAULT_INFO': 'alesplus.urls.schema_view',
 }
 
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'content-type',
+]
+
+CORS_ALLOW_CREDENTIALS = True
