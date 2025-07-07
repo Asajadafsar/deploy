@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, parsers
@@ -225,7 +226,14 @@ class AccountView(APIView):
 
         return Response({'error': 'Invalid credentials!'}, status=401)
 
+
+
+
+
+
 #send email forget by swagger
+logger = logging.getLogger(__name__)
+
 class RequestPasswordResetView(APIView):
     permission_classes = [AllowAny]
 
@@ -251,7 +259,7 @@ class RequestPasswordResetView(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            # امنیت: همیشه پیام مشابه بده
+            # امنیت: پیام یکسان برای جلوگیری از تشخیص وجود ایمیل
             return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
 
         # تولید توکن یکتا
@@ -259,7 +267,7 @@ class RequestPasswordResetView(APIView):
         while PasswordResetToken.objects.filter(token=token).exists():
             token = get_random_string(64)
 
-        # ساخت توکن در دیتابیس
+        # ذخیره توکن در دیتابیس
         PasswordResetToken.objects.create(
             user=user,
             token=token,
@@ -271,19 +279,22 @@ class RequestPasswordResetView(APIView):
             f"Hi {user.first_name},\n\n"
             f"You requested a password reset. Click the link below to reset your password:\n\n"
             f"{reset_link}\n\n"
-            "If you didn't request this, just ignore this email."
+            f"If you didn't request this, you can ignore this email."
         )
 
-        send_mail(
-            subject="Password Reset Request",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
-        )
+        try:
+            send_mail(
+                subject="Password Reset Request",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f"[EMAIL ERROR] Could not send password reset email to {email}: {str(e)}")
+            return Response({'error': 'Could not send reset email. Please try again later.'}, status=500)
 
         return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
-
 
 #Get token And creat password new
 class ResetPasswordView(APIView):
