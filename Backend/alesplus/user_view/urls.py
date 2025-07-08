@@ -17,6 +17,7 @@ from .views import (
     AccountView,
     LoginHistoryView,
     ActiveDevicesView,
+    RefreshTokenView,
 )
 
 urlpatterns = [
@@ -36,5 +37,6 @@ urlpatterns = [
     path('login-history', LoginHistoryView.as_view()),
     path('active-devices', ActiveDevicesView.as_view()),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+    path('token/refresh/', RefreshTokenView.as_view()),
     path('request-password-reset/', RequestPasswordResetView.as_view(), name='request-password-reset'),
 ]

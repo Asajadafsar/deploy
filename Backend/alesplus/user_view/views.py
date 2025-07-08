@@ -1,4 +1,5 @@
 import logging
+from tokenize import TokenError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, parsers
@@ -102,7 +103,51 @@ class PartnershipRequestView(APIView):
 
 
 
+class RefreshTokenView(APIView):
+    permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        operation_description="Refresh access & refresh token using refresh token.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["refresh"],
+            properties={
+                "refresh": openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ),
+        responses={200: "Tokens refreshed successfully", 401: "Invalid or expired token"}
+    )
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required!'}, status=400)
+
+        try:
+            old_refresh = RefreshToken(refresh_token)
+            user_id = old_refresh['user_id']
+            user = CustomUser.objects.get(id=user_id)
+
+            # ساخت توکن جدید
+            new_refresh = RefreshToken.for_user(user)
+            new_access = str(new_refresh.access_token)
+
+            # ذخیره در مدل کاربر (اختیاری)
+            user.refresh_token = str(new_refresh)
+            user.access_token = new_access
+            user.save()
+
+            return Response({
+                'message': 'Tokens refreshed successfully',
+                'access': new_access,
+                'refresh': str(new_refresh)
+            })
+
+        except TokenError:
+            return Response({'error': 'Invalid or expired refresh token'}, status=401)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found!'}, status=404)
+        except Exception as e:
+            return Response({'error': f"Server error: {str(e)}"}, status=500)
 
 
 #--User Registration and Login--
