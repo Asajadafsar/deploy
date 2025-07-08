@@ -156,18 +156,13 @@ AUTH_USER_MODEL = 'user_view.CustomUser'
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
 EMAIL_HOST = 'mail.alecplus.tech'
-EMAIL_PORT = 587
-
-EMAIL_USE_TLS = True        # فعال ← چون از پورت 587 استفاده می‌کنیم
-EMAIL_USE_SSL = False       # غیرفعال ← چون TLS فعاله
-
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
 EMAIL_HOST_USER = 'rest@alecplus.tech'
 EMAIL_HOST_PASSWORD = 'MI3_2,S.J_TM'
-
 DEFAULT_FROM_EMAIL = 'rest@alecplus.tech'
-
 
 
 from corsheaders.defaults import default_headers
