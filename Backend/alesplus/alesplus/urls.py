@@ -34,6 +34,9 @@ urlpatterns = [
 
     # ✅ Your API routes (e.g., https://api.alecplus.tech/contact)
     path('', include('user_view.urls')),
+
+    # Add presale API route
+    path('presale/', include('presale.urls')),  # Add this line
 ]
 
 if settings.DEBUG:
