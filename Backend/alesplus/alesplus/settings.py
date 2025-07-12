@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     '91.107.245.14',
     'api.alecplus.tech',
     '193.5.44.190',
+    'test.alecplus.tech'
 ]
 
 
