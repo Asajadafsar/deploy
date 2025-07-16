@@ -22,6 +22,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('AdminR.urls')),
 
     # ✅ Swagger UI as root (https://api.alecplus.tech/)
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='root-swagger-ui'),

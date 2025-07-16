@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'presale',
+    'AdminR',
 ]
 from datetime import timedelta
 REST_FRAMEWORK = {
