@@ -2,8 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
-from .models import PresaleTransaction
 from drf_yasg import openapi
+from .models import PresaleTransaction
+from django.core.mail import send_mail
 
 class PresaleAPIView(APIView):
 
@@ -60,6 +61,35 @@ class PresaleAPIView(APIView):
             token_quantity=token_quantity,
             transaction_code=transaction_code
         )
+
+        # Send confirmation email
+        try:
+            send_mail(
+                subject='✅ Alecplus Token Presale Confirmation',
+                message=(
+                    f"Dear {user_name},\n\n"
+                    f"Thank you for participating in the Alecplus token presale.\n\n"
+                    f"Here are your transaction details:\n"
+                    f"- Payment Amount (USDT): {amount_usdt}\n"
+                    f"- Token Quantity: {token_quantity}\n"
+                    f"- Network: {payment_network}\n"
+                    f"- Wallet Address: {wallet_address}\n"
+                    f"- Transaction Code: {transaction_code}\n\n"
+                    f"Once our user dashboard and platform are fully launched, "
+                    f"your purchased tokens will be credited to your account.\n\n"
+                    f"Stay tuned for updates and thank you for trusting Alecplus!\n\n"
+                    f"Best regards,\n"
+                    f"Alecplus Team"
+                ),
+                from_email='rest@alecplus.tech',
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            return Response({
+                "error": "Transaction saved but failed to send confirmation email.",
+                "detail": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             "transaction_id": presale_transaction.id,
