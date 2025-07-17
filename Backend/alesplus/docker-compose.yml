@@ -8,19 +8,16 @@ services:
       POSTGRES_DB: alesplus_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Aliafsar31344
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   web:
     build: .
     command: gunicorn alesplus.wsgi:application --bind 0.0.0.0:8000
-
     volumes:
       - .:/app
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"  # فقط به شبکه داخلی Docker باز باشه
     depends_on:
       - db
     environment:
@@ -30,5 +27,19 @@ services:
       DB_HOST: db
       DB_PORT: 5432
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d  # کانفیگ Nginx را اینجا بذار
+      - /etc/letsencrypt:/etc/letsencrypt  # گواهی SSL
+    depends_on:
+      - web
+    networks:
+      - default
+
 volumes:
   postgres_data:
+
