@@ -10,14 +10,16 @@ services:
       POSTGRES_PASSWORD: Aliafsar31344
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   web:
     build: .
     command: gunicorn alesplus.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
-    expose:
-      - "8000"  # فقط به شبکه داخلی Docker باز باشه
+    ports:
+      - "8000:8000"  # برای اینکه Nginx خارج از داکر بتونه بهش وصل بشه
     depends_on:
       - db
     environment:
@@ -27,19 +29,5 @@ services:
       DB_HOST: db
       DB_PORT: 5432
 
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d  # کانفیگ Nginx را اینجا بذار
-      - /etc/letsencrypt:/etc/letsencrypt  # گواهی SSL
-    depends_on:
-      - web
-    networks:
-      - default
-
 volumes:
   postgres_data:
-
