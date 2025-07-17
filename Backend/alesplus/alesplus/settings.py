@@ -180,13 +180,13 @@ SWAGGER_SETTINGS = {
 }
 
 
-CORS_ALLOWED_ORIGINS = [
-    "https://alecplus.tech",        
-    "http://localhost:5173",       
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "https://alecplus.tech",        
+#     "http://localhost:5173",       
+# ]
 
 
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'content-type',
 ]
