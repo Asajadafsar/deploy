@@ -81,7 +81,7 @@ class PresaleAPIView(APIView):
                     f"Best regards,\n"
                     f"Alecplus Team"
                 ),
-                from_email='rest@alecplus.tech',
+                from_email='notification@alecplus.tech',
                 recipient_list=[email],
                 fail_silently=False,
             )

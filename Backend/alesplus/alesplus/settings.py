@@ -164,9 +164,9 @@ EMAIL_HOST = 'mail.alecplus.tech'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 EMAIL_USE_TLS = False
-EMAIL_HOST_USER = 'rest@alecplus.tech'
-EMAIL_HOST_PASSWORD = 'MI3_2,S.J_TM'
-DEFAULT_FROM_EMAIL = 'rest@alecplus.tech'
+EMAIL_HOST_USER = 'notification@alecplus.tech'
+EMAIL_HOST_PASSWORD = 'SUKnOzG_q)Aq'
+DEFAULT_FROM_EMAIL = 'notification@alecplus.tech'
 
 
 from corsheaders.defaults import default_headers
