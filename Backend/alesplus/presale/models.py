@@ -1,11 +1,20 @@
 from django.db import models
 
 class PresaleTransaction(models.Model):
+    NETWORK_CHOICES = [
+        ('TRC20', 'TRC20'),
+        ('BEP20', 'BEP20'),
+    ]
+
     user_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    payment_network = models.CharField(max_length=10, choices=[('TRC20', 'TRC20'), ('BEP20', 'BEP20')])
-    wallet_address = models.CharField(max_length=255)
+
+    payment_network = models.CharField(max_length=10, choices=NETWORK_CHOICES)
+
+    user_wallet_address = models.CharField(max_length=255)
+    user_wallet_network = models.CharField(max_length=10, choices=NETWORK_CHOICES)
+
     amount_usdt = models.DecimalField(max_digits=12, decimal_places=2)
     token_quantity = models.DecimalField(max_digits=12, decimal_places=2)
     transaction_code = models.CharField(max_length=255)

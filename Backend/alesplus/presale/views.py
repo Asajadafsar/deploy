@@ -16,8 +16,17 @@ class PresaleAPIView(APIView):
                 'user_name': openapi.Schema(type=openapi.TYPE_STRING),
                 'email': openapi.Schema(type=openapi.TYPE_STRING),
                 'phone_number': openapi.Schema(type=openapi.TYPE_STRING, description="Optional phone number"),
-                'payment_network': openapi.Schema(type=openapi.TYPE_STRING, description="Payment network (TRC20 or BEP20)"),
-                'wallet_address': openapi.Schema(type=openapi.TYPE_STRING),
+                'payment_network': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Payment network for deposit (TRC20 or BEP20)",
+                    enum=["TRC20", "BEP20"]
+                ),
+                'user_wallet_address': openapi.Schema(type=openapi.TYPE_STRING),
+                'user_wallet_network': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Network of user's wallet (TRC20 or BEP20)",
+                    enum=["TRC20", "BEP20"]
+                ),
                 'amount_usdt': openapi.Schema(type=openapi.TYPE_NUMBER, description="Amount in USDT"),
                 'transaction_code': openapi.Schema(type=openapi.TYPE_STRING, description="Transaction code entered by user")
             }
@@ -42,12 +51,16 @@ class PresaleAPIView(APIView):
         email = request.data.get('email')
         phone_number = request.data.get('phone_number', '')
         payment_network = request.data.get('payment_network')
-        wallet_address = request.data.get('wallet_address')
+        user_wallet_address = request.data.get('user_wallet_address')
+        user_wallet_network = request.data.get('user_wallet_network')
         amount_usdt = request.data.get('amount_usdt')
         transaction_code = request.data.get('transaction_code')
 
-        if not all([user_name, email, payment_network, wallet_address, amount_usdt, transaction_code]):
+        if not all([user_name, email, payment_network, user_wallet_address, user_wallet_network, amount_usdt, transaction_code]):
             return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if payment_network not in ['TRC20', 'BEP20'] or user_wallet_network not in ['TRC20', 'BEP20']:
+            return Response({"error": "Invalid network choice"}, status=status.HTTP_400_BAD_REQUEST)
 
         token_quantity = float(amount_usdt) / 0.10
 
@@ -56,13 +69,13 @@ class PresaleAPIView(APIView):
             email=email,
             phone_number=phone_number,
             payment_network=payment_network,
-            wallet_address=wallet_address,
+            user_wallet_address=user_wallet_address,
+            user_wallet_network=user_wallet_network,
             amount_usdt=amount_usdt,
             token_quantity=token_quantity,
             transaction_code=transaction_code
         )
 
-        # Send confirmation email
         try:
             send_mail(
                 subject='✅ Alecplus Token Presale Confirmation',
@@ -72,10 +85,10 @@ class PresaleAPIView(APIView):
                     f"Here are your transaction details:\n"
                     f"- Payment Amount (USDT): {amount_usdt}\n"
                     f"- Token Quantity: {token_quantity}\n"
-                    f"- Network: {payment_network}\n"
-                    f"- Wallet Address: {wallet_address}\n"
+                    f"- Deposit Network: {payment_network}\n"
+                    f"- Your Wallet: {user_wallet_address} ({user_wallet_network})\n"
                     f"- Transaction Code: {transaction_code}\n\n"
-                    f"Once our user dashboard and platform are fully launched, "
+                    f"Once our platform is fully launched, "
                     f"your purchased tokens will be credited to your account.\n\n"
                     f"Stay tuned for updates and thank you for trusting Alecplus!\n\n"
                     f"Best regards,\n"
