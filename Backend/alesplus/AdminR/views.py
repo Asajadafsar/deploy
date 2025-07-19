@@ -40,16 +40,18 @@ def token_required(view_func):
 @api_view(['GET'])
 @token_required
 def view_presale_transactions(request):
-    range = request.GET.get("range", "[0, 10]")
-    filter = request.GET.get("filter", "")
+    range_param = request.GET.get("range", "[0, 10]")
+    filter_param = request.GET.get("filter", "")
 
     try:
-        final_range = json.loads(range)
+        final_range = json.loads(range_param)
+        if not isinstance(final_range, list) or len(final_range) != 2:
+            final_range = [0, 10]
     except Exception:
         final_range = [0, 10]
 
     try:
-        filter_dict = json.loads(filter)
+        filter_dict = json.loads(filter_param)
         search = filter_dict.get("q", "")
     except Exception:
         search = ""
@@ -68,7 +70,8 @@ def view_presale_transactions(request):
             "email": tx.email,
             "phone_number": tx.phone_number,
             "payment_network": tx.payment_network,
-            "wallet_address": tx.wallet_address,
+            "user_wallet_address": tx.user_wallet_address,
+            "user_wallet_network": tx.user_wallet_network,
             "amount_usdt": float(tx.amount_usdt),
             "token_quantity": float(tx.token_quantity),
             "transaction_code": tx.transaction_code,
@@ -82,8 +85,6 @@ def view_presale_transactions(request):
     response["Content-Range"] = f"transactions {final_range[0]}-{final_range[1]-1}/{total}"
     response["Access-Control-Expose-Headers"] = "Content-Range"
     return response
-
-
 
 #Edit status
 @api_view(['PUT'])
