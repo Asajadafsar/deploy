@@ -64,6 +64,7 @@ class PresaleAPIView(APIView):
 
         token_quantity = float(amount_usdt) / 0.10
 
+        # ذخیره تراکنش
         presale_transaction = PresaleTransaction.objects.create(
             user_name=user_name,
             email=email,
@@ -98,6 +99,29 @@ class PresaleAPIView(APIView):
                 recipient_list=[email],
                 fail_silently=False,
             )
+
+            send_mail(
+                subject='🔔 New Presale Registration',
+                message=(
+                    f"Hello Alecplus Admin,\n\n"
+                    f"A new user has registered for the token presale. Here are the details:\n\n"
+                    f"- Name: {user_name}\n"
+                    f"- Email: {email}\n"
+                    f"- Phone: {phone_number}\n"
+                    f"- Payment Amount (USDT): {amount_usdt}\n"
+                    f"- Token Quantity: {token_quantity}\n"
+                    f"- Deposit Network: {payment_network}\n"
+                    f"- User Wallet: {user_wallet_address} ({user_wallet_network})\n"
+                    f"- Transaction Code: {transaction_code}\n\n"
+                    f"Please verify and process the transaction.\n\n"
+                    f"Regards,\n"
+                    f"Alecplus System"
+                ),
+                from_email='notification@alecplus.tech',
+                recipient_list=['info@alecplus.tech'],
+                fail_silently=False,
+            )
+
         except Exception as e:
             return Response({
                 "error": "Transaction saved but failed to send confirmation email.",
