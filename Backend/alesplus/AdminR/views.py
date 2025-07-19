@@ -6,8 +6,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from presale.models import PresaleTransaction
-from user_view.models import CustomUser as User  # این alias استفاده شده
+from user_view.models import CustomUser as User  # استفاده از alias
 from rest_framework import status
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 # Token verification decorator with role check
 def token_required(view_func):
@@ -23,7 +24,7 @@ def token_required(view_func):
         try:
             access_token = AccessToken(token)
             user_id = access_token['user_id']
-            user = User.objects.get(id=user_id)  # ✅ اینجا باید از alias استفاده کنی
+            user = User.objects.get(id=user_id)
 
             if user.role != 'admin':
                 return JsonResponse({'error': 'Permission denied'}, status=403)
@@ -36,7 +37,23 @@ def token_required(view_func):
 
     return wrapper
 
+
 # View all Presale Transactions (admin-only)
+@extend_schema(
+    summary="View all Presale Transactions (Admin Only)",
+    description=(
+        "This endpoint returns a paginated list of presale transactions.\n\n"
+        "**Permissions:** Only users with `admin` role can access this endpoint.\n\n"
+        "**Query Parameters:**\n"
+        "- `range`: JSON list `[start, end]` (e.g., `[0,10]`) for pagination.\n"
+        "- `filter`: JSON object with key `q` for search (e.g., `{\"q\":\"Ali\"}`)."
+    ),
+    parameters=[
+        OpenApiParameter(name="range", description="Pagination range, e.g., [0, 10]", required=False, type=str),
+        OpenApiParameter(name="filter", description="Filter by search keyword (in user_name or email)", required=False, type=str),
+    ],
+    responses={200: "List of presale transactions"}
+)
 @api_view(['GET'])
 @token_required
 def view_presale_transactions(request):
@@ -86,7 +103,38 @@ def view_presale_transactions(request):
     response["Access-Control-Expose-Headers"] = "Content-Range"
     return response
 
-#Edit status
+
+# Edit transaction status
+@extend_schema(
+    summary="Update Transaction Status (Admin Only)",
+    description=(
+        "Update the `transaction_status` of a specific presale transaction.\n\n"
+        "**Permissions:** Only `admin` users can perform this action.\n\n"
+        "**Request Body Example:**\n"
+        "```json\n{\n  \"transaction_status\": \"Approved\"\n}\n```"
+    ),
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'transaction_status': {'type': 'string', 'example': 'Approved'}
+            },
+            'required': ['transaction_status']
+        }
+    },
+    responses={
+        200: OpenApiExample(
+            'Success',
+            value={
+                'message': 'Transaction status updated successfully',
+                'id': 1,
+                'transaction_status': 'Approved'
+            }
+        ),
+        404: OpenApiExample('Not Found', value={'error': 'Transaction not found'}),
+        400: OpenApiExample('Bad Request', value={'error': 'transaction_status is required'}),
+    }
+)
 @api_view(['PUT'])
 @token_required
 def update_transaction_status(request, transaction_id):
@@ -107,5 +155,3 @@ def update_transaction_status(request, transaction_id):
         'id': transaction.id,
         'transaction_status': transaction.transaction_status
     }, status=status.HTTP_200_OK)
-
-
