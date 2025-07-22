@@ -292,9 +292,7 @@ class RequestPasswordResetView(APIView):
                 "email": openapi.Schema(type=openapi.TYPE_STRING, format="email")
             }
         ),
-        responses={
-            200: openapi.Response(description="Reset email sent"),
-        }
+        responses={200: openapi.Response(description="Reset email sent")},
     )
     def post(self, request):
         email = request.data.get('email')
@@ -304,27 +302,30 @@ class RequestPasswordResetView(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            # امنیت: پیام یکسان برای جلوگیری از تشخیص وجود ایمیل
-            return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
+            return Response(
+                {'message': 'If your email exists in our system, a reset link has been sent.'},
+                status=200
+            )
 
         # تولید توکن یکتا
         token = get_random_string(64)
         while PasswordResetToken.objects.filter(token=token).exists():
             token = get_random_string(64)
 
-        # ذخیره توکن در دیتابیس
         PasswordResetToken.objects.create(
             user=user,
             token=token,
             expires_at=timezone.now() + timedelta(hours=1)
         )
 
-        reset_link = f"https://auth.alecplus.tech/forgot-password?token={token}"
+        # لینک فرانت‌اند
+        reset_link = f"https://alecplus.tech/forgot-password?token={token}"
         message = (
-            f"Hi {user.first_name},\n\n"
+            f"Hi {user.first_name or 'User'},\n\n"
             f"You requested a password reset. Click the link below to reset your password:\n\n"
             f"{reset_link}\n\n"
-            f"If you didn't request this, you can ignore this email."
+            f"If you didn't request this, you can ignore this email.\n\n"
+            f"Regards,\nAlecplus Team"
         )
 
         try:
@@ -341,7 +342,7 @@ class RequestPasswordResetView(APIView):
 
         return Response({'message': 'If your email exists in our system, a reset link has been sent.'}, status=200)
 
-#Get token And creat password new
+
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
@@ -359,7 +360,7 @@ class ResetPasswordView(APIView):
         ),
         responses={
             200: "Password reset successful",
-            400: "Invalid or expired token / Password mismatch"
+            400: "Invalid or expired token / Password mismatch",
         }
     )
     def post(self, request):
@@ -378,18 +379,18 @@ class ResetPasswordView(APIView):
         except PasswordResetToken.DoesNotExist:
             return Response({'error': 'Invalid token.'}, status=400)
 
-        if not token_obj.is_valid():
+        if not token_obj.is_valid() or token_obj.used:
             return Response({'error': 'Token has expired or already used.'}, status=400)
 
         user = token_obj.user
         user.password = make_password(new_password)
         user.save()
 
-        # Deactivate the token
         token_obj.used = True
         token_obj.save()
 
         return Response({'message': 'Password has been reset successfully.'})
+    
 
 
 #--User Account & Security--
