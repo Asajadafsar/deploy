@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from presale.models import PresaleTransaction
-from user_view.models import CustomUser as User  # این alias استفاده شده
+from user_view.models import CustomUser as User
 from rest_framework import status
 
 # Token verification decorator with role check
@@ -23,7 +23,7 @@ def token_required(view_func):
         try:
             access_token = AccessToken(token)
             user_id = access_token['user_id']
-            user = User.objects.get(id=user_id)  # ✅ اینجا باید از alias استفاده کنی
+            user = User.objects.get(id=user_id)  # استفاده از alias
 
             if user.role != 'admin':
                 return JsonResponse({'error': 'Permission denied'}, status=403)
@@ -35,6 +35,7 @@ def token_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
+
 
 # View all Presale Transactions (admin-only)
 @api_view(['GET'])
@@ -86,7 +87,35 @@ def view_presale_transactions(request):
     response["Access-Control-Expose-Headers"] = "Content-Range"
     return response
 
-#Edit status
+
+# Get one Presale Transaction (admin-only)
+@api_view(['GET'])
+@token_required
+def getone_transaction(request, transaction_id):
+    try:
+        tx = PresaleTransaction.objects.get(pk=transaction_id)
+    except PresaleTransaction.DoesNotExist:
+        return JsonResponse({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    data = {
+        "id": tx.id,
+        "user_name": tx.user_name,
+        "email": tx.email,
+        "phone_number": tx.phone_number,
+        "payment_network": tx.payment_network,
+        "user_wallet_address": tx.user_wallet_address,
+        "user_wallet_network": tx.user_wallet_network,
+        "amount_usdt": float(tx.amount_usdt),
+        "token_quantity": float(tx.token_quantity),
+        "transaction_code": tx.transaction_code,
+        "transaction_status": tx.transaction_status,
+        "created_at": tx.created_at.strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+# Edit status
 @api_view(['PUT'])
 @token_required
 def update_transaction_status(request, transaction_id):
@@ -107,5 +136,3 @@ def update_transaction_status(request, transaction_id):
         'id': transaction.id,
         'transaction_status': transaction.transaction_status
     }, status=status.HTTP_200_OK)
-
-
