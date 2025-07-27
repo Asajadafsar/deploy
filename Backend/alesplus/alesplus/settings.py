@@ -181,11 +181,13 @@ SWAGGER_SETTINGS = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    "https://presale.alecplus.tech",
     "https://alecplus.tech",
-    "https://dashboard.alecplus.tech", 
+    "https://www.alecplus.tech",
+    "https://presale.alecplus.tech",
+    "https://dashboard.alecplus.tech",
     "http://localhost:5173",
 ]
+
 
 
 CORS_ALLOW_HEADERS = list(default_headers) + [

@@ -23,7 +23,7 @@ def token_required(view_func):
         try:
             access_token = AccessToken(token)
             user_id = access_token['user_id']
-            user = User.objects.get(id=user_id)  # استفاده از alias
+            user = User.objects.get(id=user_id) 
 
             if user.role != 'admin':
                 return JsonResponse({'error': 'Permission denied'}, status=403)
