@@ -185,18 +185,17 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.alecplus.tech",
     "https://presale.alecplus.tech",
     "https://dashboard.alecplus.tech",
-    "https://test.alecplus.tech",  
+    "https://test.alecplus.tech",
     "http://localhost:5173",
 ]
 
-
-
-
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'content-type',
     'authorization',
     'x-csrftoken',
 ]
+
 
 
 
