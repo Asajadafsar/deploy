@@ -273,10 +273,29 @@ class AccountView(APIView):
         return Response({'error': 'Invalid credentials!'}, status=401)
 
 
-
 class PortfolioOverviewView(JWTUserMixin, APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Overview of user portfolio",
+        operation_description="Returns the total asset summary, token purchase balance, withdrawable balance, total withdrawn amount, and profit/loss chart data for the authenticated user.",
+        responses={
+            200: openapi.Response(
+                description="Portfolio overview data",
+                examples={
+                    "application/json": {
+                        "total_assets": 1000.0,
+                        "token_purchase_balance": 500.0,
+                        "withdrawable_balance": 200.0,
+                        "total_withdrawn": 300.0,
+                        "profit_and_loss": 200.0
+                    }
+                }
+            ),
+            401: "Unauthorized access",
+            500: "Server error"
+        }
+    )
     def get(self, request):
         user = self.get_user_from_token(request)
         
@@ -305,8 +324,6 @@ class PortfolioOverviewView(JWTUserMixin, APIView):
         }
 
         return Response(data)
-
-
 
 #send email forget by swagger
 logger = logging.getLogger(__name__)
