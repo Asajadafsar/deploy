@@ -18,9 +18,11 @@ from .views import (
     LoginHistoryView,
     ActiveDevicesView,
     RefreshTokenView,
+    PortfolioOverviewView,
 )
 
 urlpatterns = [
+    path('portfolio-overview/', PortfolioOverviewView.as_view(), name='portfolio-overview'),
     path('account', AccountView.as_view(), name='account'),
     path('contact/', ContactUsView.as_view(), name='contact_us'),
     path('buy-token/', CreatePurchaseRequestView.as_view(), name='buy_token'),

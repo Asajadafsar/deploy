@@ -22,6 +22,7 @@ from .constants import TOKEN_PRICE, MIN_TOKENS, NETWORK_CHOICES
 from .models import LoginHistory
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
+from django.db.models import Sum
 
 
 #token jwt
@@ -273,6 +274,37 @@ class AccountView(APIView):
 
 
 
+class PortfolioOverviewView(JWTUserMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = self.get_user_from_token(request)
+        
+        # Get total asset summary (convert token to USDT)
+        total_assets = TokenPurchase.objects.filter(user=user, status='confirmed')
+        total_usdt_value = total_assets.aggregate(total_usdt=Sum('usdt_amount'))['total_usdt'] or 0
+
+        # Get token purchase balance
+        token_balance = total_assets.aggregate(total_balance=Sum('usdt_amount'))['total_balance'] or 0
+
+        # Get withdrawable balance (not yet withdrawn)
+        withdrawable_balance = total_assets.filter(status='pending').aggregate(total_withdrawable=Sum('usdt_amount'))['total_withdrawable'] or 0
+
+        # Get total withdrawn amount
+        total_withdrawn = total_assets.filter(status='confirmed').aggregate(total_withdrawn=Sum('usdt_amount'))['total_withdrawn'] or 0
+
+        # Profit and Loss chart data (example: calculate the profit and loss based on withdrawal and purchase)
+        profit_loss = token_balance - total_withdrawn
+
+        data = {
+            "total_assets": total_usdt_value,
+            "token_purchase_balance": token_balance,
+            "withdrawable_balance": withdrawable_balance,
+            "total_withdrawn": total_withdrawn,
+            "profit_and_loss": profit_loss
+        }
+
+        return Response(data)
 
 
 
